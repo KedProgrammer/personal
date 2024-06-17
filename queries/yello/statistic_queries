@@ -1,0 +1,214 @@
+ SELECT count(distinct(users.id))
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1098
+            AND users.deleted = false
+            AND opened_datetime IS null
+			
+-- category emailed get_report_recipient_information full campaign
+ SELECT count(users.*)
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1080
+            AND users.deleted = false
+            AND bounced_back_datetime IS null AND sent_email IS true AND blacklisted_domain IS null
+			
+-- get_campaign_delivery_recipients open filter
+  SELECT u.deleted, u.archived, cdr.*
+            FROM campaign_delivery_recipients cdr
+            LEFT JOIN campaign_deliveries cd
+              ON cd.id = cdr.campaign_delivery_id
+            LEFT JOIN campaigns c
+              ON c.id = cd.campaign_id
+            LEFT JOIN users u
+              ON u.id = cdr.user_id
+          WHERE cd.campaign_id = 1098
+		  AND cdr.opened_datetime is not null and cdr.bounced_back_datetime is null
+		  
+-- category unopened get_report_recipient_information full campaign
+ SELECT count(users.*)
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1098
+            AND users.deleted = false
+            AND opened_datetime IS null AND sent_email IS true AND bounced_back_datetime IS null AND blacklisted_domain,  IS null
+			
+		  
+-- general query
+ SELECT distinct(users.email_address, users.first_name)
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1075 and campaign_delivery_recipients.sent_email is false AND bounced_back_datetime IS null AND blacklisted_domain IS null
+			
+			
+-- new recipients query for touchpount
+
+WITH already_delivered_user_ids AS (
+                SELECT users.id, bounced_back_datetime, blacklisted_domain, touchpoints.id as touchpoint_id
+                FROM campaigns
+                JOIN campaign_deliveries ON campaigns.id = campaign_deliveries.campaign_id
+                JOIN campaign_delivery_recipients ON campaign_deliveries.id =
+                  campaign_delivery_recipients.campaign_delivery_id
+                JOIN touchpoints ON campaign_deliveries.touchpoint_id = touchpoints.id
+                JOIN users ON campaign_delivery_recipients.user_id = users.id
+                WHERE campaigns.id = 1142
+                AND (campaign_delivery_recipients.sent_email = true OR bounced_back_datetime IS NOT null OR blacklisted_domain IS NOT null OR campaign_delivery_recipients.sent_email is false)
+                AND users.deleted IS FALSE
+                AND users.archived IS FALSE
+              )
+
+              SELECT count(DISTINCT users.*), touchpoints.id
+              FROM users
+			  	LEFT OUTER JOIN folder_members on folder_members.user_id = users.id
+                LEFT OUTER JOIN folders on folder_members.folder_id = folders.id
+                LEFT OUTER JOIN owner_tags on owner_tags.owner_id = users.id AND owner_tags.owner_type = 'user'
+                LEFT OUTER JOIN tags on owner_tags.tag_id = tags.id
+                JOIN campaign_recipients on campaign_recipients.recipient_id = tags.id 
+				OR campaign_recipients.recipient_id = folders.id
+                JOIN campaigns on campaign_recipients.campaign_id = campaigns.id
+                JOIN touchpoints on campaigns.id = touchpoints.campaign_id
+                WHERE users.deleted IS FALSE
+                AND users.archived IS FALSE
+                AND (campaign_recipients.recipient_type = 'tag' OR campaign_recipients.recipient_type = 'folder')
+				AND campaigns.id = 1142
+			
+                AND NOT EXISTS
+                (SELECT already_delivered_user_ids.id FROM already_delivered_user_ids
+                  WHERE already_delivered_user_ids.id = users.id
+                  AND already_delivered_user_ids.touchpoint_id = touchpoints.id)
+                GROUP BY touchpoints.id;
+				
+-- category unclicked get_report_recipient_information full campaign
+ SELECT count(users.*)
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1080
+            AND users.deleted = false
+            AND clicked_datetime IS null AND (bounced_back_datetime IS NULL OR clicked_datetime > bounced_back_datetime) AND sent_email is true
+
+-- category clicked get_report_recipient_information full campaign
+ SELECT count(users.*)
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            WHERE campaign_deliveries.campaign_id = 1080
+            AND users.deleted = false
+            AND clicked_datetime IS NOT null AND (bounced_back_datetime IS NULL OR clicked_datetime > bounced_back_datetime) AND sent_email is true
+			
+			-- misselanea
+			select * from campaign_deliveries order by id desc 
+			
+			
+			select * from touchpoints where touchpoints.campaign_id = 1075
+			
+			select * from campaign_delivery_recipients 
+			join campaign_deliveries ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+			where campaign_deliveries.id = 3258
+			
+			
+			
+			select * from campaign_statistics where campaign_id = 1075 and touchpoint_id = 1058
+			
+			select * from users
+			join folder_members on folder_members.user_id = users.id
+			join folders on folders.id = folder_members.folder_id
+			where folders.name = 'OC Folder'
+			
+			select * from folders where folders.name = 'OC FOLDER'
+			
+			
+-- recipients count by touchpoint
+
+ SELECT COUNT(DISTINCT users.*), touchpoints.id
+                FROM campaign_deliveries
+                JOIN campaign_delivery_recipients ON campaign_deliveries.id =
+                  campaign_delivery_recipients.campaign_delivery_id
+                JOIN users ON campaign_delivery_recipients.user_id = users.id
+                JOIN touchpoints ON touchpoints.id = campaign_deliveries.touchpoint_id
+               
+                WHERE campaign_deliveries.campaign_id = 1075
+               
+                AND users.deleted = false
+                AND bounced_back_datetime IS null AND sent_email IS true AND blacklisted_domain IS null
+                GROUP BY touchpoints.id;
+				
+-- NOT delivered
+
+SELECT count(user_id), touchpoints.id
+          FROM campaign_delivery_recipients
+            LEFT JOIN campaign_deliveries
+            ON campaign_delivery_recipients.campaign_delivery_id = campaign_deliveries.id
+			LEFT JOIN touchpoints on touchpoints.id = campaign_deliveries.touchpoint_id
+            JOIN users
+            ON users.id = campaign_delivery_recipients.user_id
+          WHERE campaign_deliveries.campaign_id = 1148
+            AND users.deleted IS FALSE
+            AND (sent_email IS FALSE
+              OR campaign_delivery_recipients.blacklisted_domain IS NOT NULL
+              OR  campaign_delivery_recipients.bounced_back_datetime IS NOT NULL)
+			 group by touchpoints.id
+			  ---
+			  select sent_email, blacklisted_domain, bounced_back_datetime from campaign_delivery_recipients
+			  join campaign_deliveries on campaign_delivery_recipients.campaign_delivery_id = campaign_deliveries.id
+			  join touchpoints on touchpoints.id = campaign_deliveries.touchpoint_id
+			  where touchpoints.id = 1219
+			  
+			 select *  FROM campaign_delivery_recipients
+             JOIN campaign_deliveries
+            ON campaign_delivery_recipients.campaign_delivery_id = campaign_deliveries.id
+			 JOIN touchpoints on touchpoints.id = campaign_deliveries.touchpoint_id
+            JOIN users
+            ON users.id = campaign_delivery_recipients.user_id
+			where touchpoints.id = 1237
+			AND users.deleted IS FALSE
+            AND (sent_email IS FALSE
+              OR campaign_delivery_recipients.blacklisted_domain IS NOT NULL
+              OR  campaign_delivery_recipients.bounced_back_datetime IS NOT NULL)
+			  
+			  -- not deliveries full campaign
+			   SELECT user_id
+          FROM campaign_delivery_recipients
+            LEFT JOIN campaign_deliveries
+            ON campaign_delivery_recipients.campaign_delivery_id = campaign_deliveries.id
+            JOIN users
+            ON users.id = campaign_delivery_recipients.user_id
+          WHERE campaign_deliveries.campaign_id = 1148
+            AND users.deleted IS FALSE
+            AND (sent_email IS FALSE
+              OR campaign_delivery_recipients.blacklisted_domain IS NOT NULL
+              OR  campaign_delivery_recipients.bounced_back_datetime IS NOT NULL)
+			  
+			  
+-- not deliveries per touchpoint
+
+SELECT COUNT(*) AS count_all, "touchpoints"."id" AS touchpoints_id FROM "campaign_delivery_recipients"
+INNER JOIN "users" "user" ON "user"."id" = "campaign_delivery_recipients"."user_id"
+LEFT OUTER JOIN "campaign_deliveries" "campaign_delivery" ON "campaign_delivery"."id" = "campaign_delivery_recipients"."campaign_delivery_id" 
+LEFT OUTER JOIN "touchpoints" ON "touchpoints"."id" = "campaign_delivery"."touchpoint_id" 
+WHERE "campaign_delivery"."campaign_id" = 1148 AND "user"."deleted" = false
+AND ("campaign_delivery_recipients"."sent_email" = false
+OR "campaign_delivery_recipients"."blacklisted_domain" IS NOT NULL OR "campaign_delivery_recipients"."bounced_back_datetime" IS NOT NULL)
+GROUP BY "touchpoints"."id" 
+
+
+    SELECT COUNT(*) AS count_all, "touchpoints"."id" AS touchpoints_id FROM "campaign_delivery_recipients" 
+	INNER JOIN "users" "user" ON "user"."id" = "campaign_delivery_recipients"."user_id"
+	LEFT OUTER JOIN "campaign_deliveries" "campaign_delivery" ON "campaign_delivery"."id" = "campaign_delivery_recipients"."campaign_delivery_id" 
+	LEFT OUTER JOIN "touchpoints" ON "touchpoints"."id" = "campaign_delivery"."touchpoint_id" 
+	WHERE ("campaign_delivery"."campaign_id" = 1148 AND "user"."deleted" = false AND "campaign_delivery_recipients"."sent_email" = false OR "campaign_delivery_recipients"."blacklisted_domain" IS NOT NULL OR "campaign_delivery_recipients"."bounced_back_datetime" IS NOT NULL) GROUP BY "touchpoints"."id"  
+				
+				
+			
+			
+			
+			
+			
+
+			
+
+           

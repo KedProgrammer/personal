@@ -1,0 +1,27 @@
+Places where we need to apply RBCA ES filters:
+   ☐ event attatching page?
+   ☐ candidate list within schedule creation page
+
+
+  
+EBS ZOOM:
+  ☐ Both users must be Licensed or On-Prem and be on the same account
+  ☐ For a webinar, both users must have the webinar add-on
+  ☐ Instant meetings do not support the schedule_for parameter; you canno schedule an instant meeting for another user
+  zoom co hosting:
+    ☐ add co host you will need an pro account
+    ☐ https://support.zoom.us/hc/en-us/articles/206330935-Enabling-and-adding-a-co-host -> enabling co hosting
+    ☐ Co Hosts can only be set during the meeting.
+
+  ZOOM Alternative host:
+    ☐ When scheduling a meeting, the host can designate another Licensed user on the same account to be the alternative host. The alternative host can start the meeting on the host's behalf. This user will receive an email notifying them that they've been added as an alternative host, with a link to start the meeting. If this email notification is disabled in the Zoom web portal, the alternative host will not receive an email to start the meeting. 
+    ☐ https://support.zoom.us/hc/en-us/articles/208220166-Designating-an-alternative-host
+    ☐ https://devforum.zoom.us/t/is-there-a-rest-api-to-make-participant-be-co-host/9577
+    ☐ Both, host and alternative hosts needs to have licence
+
+    Scheduling privilege:
+    ☐ https://support.zoom.us/hc/en-us/articles/201362803
+
+    ☐ https://devforum.zoom.us/t/schedule-meeting-on-behalf-of-someone-else/27382
+    ☐ https://devforum.zoom.us/t/possible-to-create-meeting-on-behalf-of-another-zoom-account/2779
+    ☐ You can assign users in your account to schedule meetings on your behalf. You can also schedule meetings on behalf of someone that has assigned you scheduling privilege. You and the assigned scheduler must be on a Paid plan within the same account.

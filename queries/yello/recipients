@@ -1,0 +1,12 @@
+SELECT COUNT(DISTINCT users.*), touchpoints.id
+
+            FROM campaign_deliveries
+            JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+            JOIN users ON campaign_delivery_recipients.user_id = users.id
+            JOIN touchpoints ON touchpoints.id = campaign_deliveries.touchpoint_id
+            WHERE campaign_deliveries.campaign_id = 571
+            AND users.deleted = false
+
+            AND ((bounced_back_datetime IS null OR blacklisted_domain IS null) AND sent_email is true)
+
+            GROUP BY touchpoints.id

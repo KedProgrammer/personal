@@ -1,0 +1,32 @@
+WITH already_delivered_user_ids AS (
+                SELECT  users.id, touchpoints.id as touchpoint_id
+                FROM campaigns
+                JOIN campaign_deliveries ON campaigns.id = campaign_deliveries.campaign_id
+                JOIN campaign_delivery_recipients ON campaign_deliveries.id = campaign_delivery_recipients.campaign_delivery_id
+        		JOIN touchpoints ON campaign_deliveries.touchpoint_id = touchpoints.id
+                JOIN users ON campaign_delivery_recipients.user_id = users.id
+
+                WHERE campaigns.id = 571 AND campaign_delivery_recipients.sent_email = true
+             
+                AND users.deleted IS FALSE
+                AND users.archived IS FALSE
+              )
+
+              SELECT count(users.id), touchpoints.id as touchpoint_id
+              FROM users
+			  	JOIN folder_members on folder_members.user_id = users.id
+				JOIN folders on folder_members.folder_id = folders.id
+				JOIN campaign_recipients on campaign_recipients.recipient_id = folders.id
+				JOIN campaigns on campaign_recipients.campaign_id = campaigns.id
+				JOIN touchpoints on campaigns.id = touchpoints.campaign_id
+                WHERE users.deleted IS FALSE
+                AND users.archived IS FALSE
+                AND users.id IN (104214, 104207)
+				AND campaign_recipients.recipient_type = 'folder'
+				AND campaigns.id = 571
+   
+                AND NOT EXISTS
+                (SELECT already_delivered_user_ids.id, already_delivered_user_ids.touchpoint_id FROM already_delivered_user_ids
+                  WHERE already_delivered_user_ids.id = users.id 
+				  AND already_delivered_user_ids.touchpoint_id = touchpoints.id )
+				GROUP BY touchpoints.id
